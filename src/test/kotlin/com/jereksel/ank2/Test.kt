@@ -1,8 +1,12 @@
 package com.jereksel.ank2
 
+import arrow.core.Either
+import arrow.core.fix
+import arrow.core.getOrElse
+import arrow.core.monad
+import arrow.typeclasses.binding
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.StringSpec
-import org.jetbrains.kotlin.cli.jvm.main
 
 class Test: StringSpec({
 
@@ -18,27 +22,18 @@ class Test: StringSpec({
        val code = """
             val p = abc.Project("arrow")
             val modify = abc.projectName()
-            modify.modify(p, {"ARROW"})
+            modify.modify(p, { "ARROW" })
            """
 
-//       main()
+       val ret = Either.monad<String>().binding {
+           val jar = KotlinCompiler.performAnnotationProcessing(objectDeclaration).bind()
+           KotlinCompiler.compile(code, listOf(jar)).bind()
+       }.fix()
 
-//       val a  = abc.personAge()
-//
-//       val person = Person(33)
+       ret.isRight() shouldBe true
 
-//       a.modify(person, {50})
-//
-//       println(person)
-
-       val ret = KotlinCompiler().compile(objectDeclaration, code)
-
-//       ret shouldBe 10
-
-       ret.toString() shouldBe "Project(name=ARROW)"
+       ret.get().toString() shouldBe "Project(name=ARROW)"
 
    }
-
-
 
 })

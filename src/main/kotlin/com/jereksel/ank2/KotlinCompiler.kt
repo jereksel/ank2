@@ -1,103 +1,107 @@
 package com.jereksel.ank2
 
-import org.jetbrains.kotlin.cli.common.CLITool
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
+import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
-import org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentException
 import org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmLocalScriptEngine
+import org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmLocalScriptEngineFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream
+import java.io.PrintStream
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.*
-import javax.script.ScriptEngineManager
 
-class KotlinCompiler {
-    fun compile(objectDeclaration: String, code: String): Any? {
+object KotlinCompiler {
+
+    fun performAnnotationProcessing(code: String): Either<String, File> {
 
         val classPathJars = System.getProperty("java.class.path").split(File.pathSeparatorChar)
 
         val annotationProcessingJar = classPathJars.first { it.contains("${File.separator}kotlin-annotation-processing${File.separator}") }
 
-        val tempFile = File.createTempFile("sfdajksdfajlk", ".kt")
-
-//        val tempFileKts = File.createTempFile("sfdajksdfajlk", ".kts")
+        val tempFile = File.createTempFile("ank2source", ".kt")
 
         val sourceDir = createTempDir()
-//        val src = File(sourceDir, "myfile.kt")
-//        src.writeText(objectDeclaration)
         val classesDir = createTempDir()
         val stubsDir = createTempDir()
         val outputDir = createTempDir()
 
-        val jar = File.createTempFile("asdsd", ".jar")
+        val jar = File.createTempFile("ank2jar", ".jar")
 
         val javacArgument = mapOf("kapt.kotlin.generated" to outputDir.absolutePath)
 
-        tempFile.writeText(objectDeclaration)
+        tempFile.writeText(code)
 
         val args = arrayOf(
                 "-Xplugin=$annotationProcessingJar",
                 "-classpath", classPathJars.joinToString(File.pathSeparator),
-//                "-classpath", *classPathJars.toTypedArray(),
-//                *classPathJars.flatMap { listOf("-classpath", it) }.toTypedArray(),
                 "-P", "plugin:org.jetbrains.kotlin.kapt3:sources=${sourceDir.absolutePath}",
                 "-P", "plugin:org.jetbrains.kotlin.kapt3:apoptions=${encodeList(javacArgument)}",
                 "-P", "plugin:org.jetbrains.kotlin.kapt3:classes=${classesDir.absolutePath}",
                 "-P", "plugin:org.jetbrains.kotlin.kapt3:stubs=${stubsDir.absolutePath}",
-//                "-P", "plugin:org.jetbrains.kotlin.kapt3:aptMode=stubsAndApt",
                 "-P", "plugin:org.jetbrains.kotlin.kapt3:aptOnly=true",
                 "-P", "plugin:org.jetbrains.kotlin.kapt3:verbose=true",
                 *classPathJars.flatMap { listOf("-P", "plugin:org.jetbrains.kotlin.kapt3:apclasspath=$it") }.toTypedArray(),
                 tempFile.absolutePath
         )
 
-        try {
-            CLITool.doMainNoExit(K2JVMCompiler(), args)
-        } catch (e: CompileEnvironmentException) {
-            e.printStackTrace()
+        ByteArrayOutputStream().let { baos ->
+
+            PrintStream(baos, true, UTF_8.displayName())
+                    .use { annotationProcessingPrintStream ->
+
+                        val ret = K2JVMCompiler().exec(annotationProcessingPrintStream, *args)
+
+                        if (ret != ExitCode.OK) {
+                            return String(baos.toByteArray()).left()
+                        }
+
+                    }
+
         }
 
         val compileArgs = arrayOf(
                 "-classpath", classPathJars.joinToString(File.pathSeparator),
-//                "-cp", classPathJars.joinToString(separator = " "),
-//                *classPathJars.flatMap { listOf("-cp", it) }.toTypedArray(),
                 tempFile.absolutePath,
                 *outputDir.listFiles().map { it.absolutePath }.toTypedArray(),
                 "-d", jar.absolutePath,
-                "-module-name", "ank_kapt_files"
+                "-module-name", "ank_kapt_files",
+                "-no-stdlib"
         )
 
-        println("Compiling")
+        ByteArrayOutputStream().let { baos ->
 
-        try {
-            CLITool.doMainNoExit(K2JVMCompiler(), compileArgs)
-        } catch (e: CompileEnvironmentException) {
-            e.printStackTrace()
+            PrintStream(baos, true, UTF_8.displayName())
+                    .use { annotationProcessingPrintStream ->
+
+                        val ret = K2JVMCompiler().exec(annotationProcessingPrintStream, *compileArgs)
+
+                        if (ret != ExitCode.OK) {
+                            return String(baos.toByteArray()).left()
+                        }
+
+                    }
+
         }
 
-        jar.setExecutable(true)
+        return jar.right()
 
-        val seManager = ScriptEngineManager()
+    }
 
-        val engine = seManager.getEngineByExtension("kts")
+    fun compile(code: String, jars: List<File>): Either<String, Any?> {
 
-        ((engine as KotlinJsr223JvmLocalScriptEngine).templateClasspath as ArrayList<File>).add(jar)
+        val engine = KotlinJsr223JvmLocalScriptEngineFactory().scriptEngine
 
-        println("JAR: $jar")
-        println("Output: $outputDir")
+        ((engine as KotlinJsr223JvmLocalScriptEngine).templateClasspath as ArrayList<File>).addAll(jars)
 
-//        outputDir.listFiles().forEach { engine.eval(it.readText()) }
-
-//        engine.eval(objectDeclaration)
-
-//        outputDir.listFiles().forEach { engine.eval(it.readText()) }
-
-        println("Evaluating script")
-
-        return engine.eval(code)
+        return engine.eval(code).right()
     }
 
     // https://kotlinlang.org/docs/reference/kapt.html
-    fun encodeList(options: Map<String, String>): String {
+    private fun encodeList(options: Map<String, String>): String {
         val os = ByteArrayOutputStream()
         val oos = ObjectOutputStream(os)
 
