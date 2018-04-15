@@ -13,9 +13,9 @@ import javax.script.ScriptEngineManager
 class KotlinCompiler {
     fun compile(objectDeclaration: String, code: String): Any? {
 
-        val classPathJars = System.getProperty("java.class.path").split(":")
+        val classPathJars = System.getProperty("java.class.path").split(File.pathSeparatorChar)
 
-        val annotationProcessingJar = classPathJars.first { it.contains("/kotlin-annotation-processing/") }
+        val annotationProcessingJar = classPathJars.first { it.contains("${File.separator}kotlin-annotation-processing${File.separator}") }
 
         val tempFile = File.createTempFile("sfdajksdfajlk", ".kt")
 
@@ -36,7 +36,7 @@ class KotlinCompiler {
 
         val args = arrayOf(
                 "-Xplugin=$annotationProcessingJar",
-                "-classpath", classPathJars.joinToString(":"),
+                "-classpath", classPathJars.joinToString(File.pathSeparator),
 //                "-classpath", *classPathJars.toTypedArray(),
 //                *classPathJars.flatMap { listOf("-classpath", it) }.toTypedArray(),
                 "-P", "plugin:org.jetbrains.kotlin.kapt3:sources=${sourceDir.absolutePath}",
@@ -57,7 +57,9 @@ class KotlinCompiler {
         }
 
         val compileArgs = arrayOf(
-                "-classpath", classPathJars.joinToString(":"),
+                "-classpath", classPathJars.joinToString(File.pathSeparator),
+//                "-cp", classPathJars.joinToString(separator = " "),
+//                *classPathJars.flatMap { listOf("-cp", it) }.toTypedArray(),
                 tempFile.absolutePath,
                 *outputDir.listFiles().map { it.absolutePath }.toTypedArray(),
                 "-d", jar.absolutePath,
@@ -85,9 +87,11 @@ class KotlinCompiler {
 
 //        outputDir.listFiles().forEach { engine.eval(it.readText()) }
 
-        engine.eval(objectDeclaration)
+//        engine.eval(objectDeclaration)
 
 //        outputDir.listFiles().forEach { engine.eval(it.readText()) }
+
+        println("Evaluating script")
 
         return engine.eval(code)
     }

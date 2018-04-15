@@ -1,5 +1,10 @@
+import org.gradle.internal.jvm.Jvm
+
 buildscript {
-    ext.kotlin_version = '1.2.31'
+    ext {
+        kotlin_version = '1.2.31'
+        arrow_version = "0.7.1"
+    }
 
     repositories {
         mavenCentral()
@@ -38,14 +43,13 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     compile "org.jetbrains:markdown:0.1.25"
     compile group: 'com.github.born2snipe', name: 'cli-progress', version: '0.4'
-    compile 'io.arrow-kt:arrow-free:0.7.1'
-    compile 'io.arrow-kt:arrow-data:0.7.1'
-    compile 'io.arrow-kt:arrow-optics:0.7.1'
-    compile 'io.arrow-kt:arrow-syntax:0.7.1'
-    compile 'io.arrow-kt:arrow-annotations-processor:0.7.1'
-//    compile files('libs/test.jar')
-//    kapt    'io.arrow-kt:arrow-annotations-processor:0.6.1'
-    testCompile 'io.kotlintest:kotlintest-runner-junit5:3.0.0'
+    compile "io.arrow-kt:arrow-free:$arrow_version"
+    compile "io.arrow-kt:arrow-data:$arrow_version"
+    compile "io.arrow-kt:arrow-optics:$arrow_version"
+    compile "io.arrow-kt:arrow-syntax:$arrow_version"
+    compile "io.arrow-kt:arrow-annotations-processor:$arrow_version"
+    testCompile 'io.kotlintest:kotlintest-runner-junit5:3.0.3'
+    testCompile files(Jvm.current().getToolsJar())
 }
 
 compileKotlin {
