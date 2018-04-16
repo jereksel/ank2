@@ -13,8 +13,6 @@ class Test: StringSpec({
    "basic test" {
 
        val objectDeclaration = """
-            package abc
-
             import arrow.optics.optics
             @optics data class Project(val name: String?)
             """
