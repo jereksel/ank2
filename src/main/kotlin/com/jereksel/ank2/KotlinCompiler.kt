@@ -1,6 +1,7 @@
 package com.jereksel.ank2
 
 import arrow.core.Either
+import arrow.core.Try
 import arrow.core.left
 import arrow.core.right
 import org.jetbrains.kotlin.cli.common.ExitCode
@@ -97,7 +98,7 @@ object KotlinCompiler {
 
         ((engine as KotlinJsr223JvmLocalScriptEngine).templateClasspath as ArrayList<File>).addAll(jars)
 
-        return engine.eval(code).right()
+        return Try { engine.eval(code) }.toEither().mapLeft { it.localizedMessage }
     }
 
     // https://kotlinlang.org/docs/reference/kapt.html

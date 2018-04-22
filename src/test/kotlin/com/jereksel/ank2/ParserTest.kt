@@ -23,7 +23,9 @@ class ParserTest: StringSpec({
 
         actual shouldBe listOf(
                 Snippet(
-                        """|package com.example.domain
+                        """|```kotlin:ank:ap
+                           |package com.example.domain
+                           |
                            |@optics
                            |data class Street(val number: Int, val name: String)
                            |@optics
@@ -31,15 +33,18 @@ class ParserTest: StringSpec({
                            |@optics
                            |data class Company(val name: String, val address: Address)
                            |@optics
-                           |data class Employee(val name: String, val company: Company?)""".trimMargin(),
+                           |data class Employee(val name: String, val company: Company?)
+                           |```""".trimMargin(),
                         Parser.Language.KOTLIN, true),
                 Snippet(
-                        """|import com.example.domain.*
+                        """|```kotlin:ank
+                           |import com.example.domain.*
                            |import com.example.domain.syntax.*
                            |
                            |val employee = Employee("John Doe", Company("Kategory", Address("Functional city", Street(42, "lambda street"))))
                            |
-                           |employee.setter().company.address.street.name.modify(String::toUpperCase)""".trimMargin(),
+                           |employee.setter().company.address.street.name.modify(String::toUpperCase)
+                           |```""".trimMargin(),
                         Parser.Language.KOTLIN, false)
         )
 
