@@ -21,7 +21,7 @@ object KotlinCompiler {
 
         val classPathJars = System.getProperty("java.class.path").split(File.pathSeparatorChar)
 
-        val annotationProcessingJar = classPathJars.first { it.contains("${File.separator}kotlin-annotation-processing${File.separator}") }
+        val annotationProcessingJar = classPathJars.first { it.contains("${File.separator}kotlin-annotation-processing-gradle${File.separator}") }
 
         val tempFile = File.createTempFile("ank2source", ".kt")
 
