@@ -2,10 +2,9 @@ package com.jereksel.ank2
 
 import arrow.core.Either
 import arrow.core.fix
-import arrow.core.getOrElse
 import arrow.core.monad
 import arrow.typeclasses.binding
-import io.kotlintest.shouldBe
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
 
 class KotlinCompilerTest: StringSpec({

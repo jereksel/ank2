@@ -1,6 +1,6 @@
 package com.jereksel.ank2
 
-import io.kotlintest.shouldBe
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
 
 class MainTest: StringSpec({
