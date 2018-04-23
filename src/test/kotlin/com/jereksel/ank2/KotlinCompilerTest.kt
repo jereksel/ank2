@@ -38,6 +38,29 @@ class KotlinCompilerTest: StringSpec({
 
    }
 
+   "when return value test" {
+
+       val code = """
+
+           val b = true
+
+           when(b) {
+            true -> "true"
+            false -> "false"
+           }
+
+
+           """
+
+       val ret = KotlinCompiler.compile(code, listOf())
+
+       ret.isRight() shouldBe true
+
+       ret.get().toString() shouldBe "true"
+
+
+   }
+
     "self referencing test" {
 
         val objectDeclaration = """
